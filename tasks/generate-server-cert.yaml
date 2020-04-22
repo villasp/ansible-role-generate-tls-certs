@@ -1,35 +1,43 @@
 ---
-  # Generate server cert
-  - name: Create CSR for server cert
+
+  - name: Generate server private key
+    local_action:
+      module: openssl_privatekey
+      path: "{{cert_dir}}/{{tls_server_key}}"
+      size: "{{tls_server_key_size}}"
+    run_once: true
+    when: generate_server_cert  
+  
+  - name: Generate CSR and key for server cert
     local_action:
       module: |
-        shell if [ ! -e {{cert_dir}}/{{inventory_hostname_short}}.csr ]
+        shell if [ ! -e {{cert_dir}}/{{tls_server_csr}} ]
         then
-        openssl req -newkey rsa:{{tls_server_key_size}} -nodes -subj "/CN={{inventory_hostname}}" \
-        -keyout "{{cert_dir}}/{{inventory_hostname_short}}.key" -out "{{cert_dir}}/{{inventory_hostname_short}}.csr"
+        openssl req -newkey rsa:{{tls_server_key_size}} -nodes -subj "/CN={{tls_server_commonname}}" \
+        -keyout "{{cert_dir}}/{{tls_server_key}}.key" -out "{{cert_dir}}/{{tls_server_csr}}"
         fi
     args:
       executable: /bin/bash
     ignore_errors: true
+    run_once: true
     when: generate_server_cert
 
-  - name: Generate certificate extensions file
+  - name: Add required extension for server authentication
     local_action:
-      module: template
-      src: templates/server-cert-extfile.cnf.j2
-      dest: "{{cert_dir}}/{{inventory_hostname_short}}-extfile.cnf"
-    when:
-      - generate_server_cert
-      - tls_server_enable_san
+      module: >
+        shell echo extendedKeyUsage = serverAuth >> {{cert_dir}}/{{tls_server_extfile}}
+    ignore_errors: true
+    run_once: true
+    when: generate_server_cert
 
   - name: Sign server cert request by CA
     local_action:
       module: |
-        shell if [ ! -e {{cert_dir}}/{{inventory_hostname_short}}.pem ]
+        shell if [ ! -e {{cert_dir}}/{{tls_server_cert}} ]
         then
         openssl x509 -req -sha256 -days {{tls_server_valid_days}} \
         -CA "{{cert_dir}}/{{tls_ca_cert}}" -CAkey "{{cert_dir}}/{{tls_ca_key}}" -set_serial {{ 999999999 | random }} \
-        -in "{{cert_dir}}/{{inventory_hostname_short}}.csr" -out "{{cert_dir}}/{{inventory_hostname_short}}.pem" {% if tls_server_enable_san %}-extfile "{{cert_dir}}/{{inventory_hostname_short}}-extfile.cnf"{% endif %}
+        -in "{{cert_dir}}/{{tls_server_csr}}" -out {{cert_dir}}/{{tls_server_cert}} -extfile {{cert_dir}}/{{tls_server_extfile}}
         
         fi
     args:

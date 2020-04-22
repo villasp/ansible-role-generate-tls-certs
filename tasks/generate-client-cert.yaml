@@ -36,8 +36,9 @@
       module: |
         shell if [ ! -e {{cert_dir}}/{{tls_client_cert}} ]
         then
-        openssl x509 -req -sha256 -days {{tls_client_valid_days}} -CA {{cert_dir}}/{{tls_ca_cert}} -CAkey {{cert_dir}}/{{tls_ca_key}} \
-        -set_serial {{ 999999999 | random }} -in {{cert_dir}}/{{tls_client_csr}} -out {{cert_dir}}/{{tls_client_cert}} -extfile {{cert_dir}}/{{tls_client_extfile}}
+        openssl x509 -req -sha256 -days {{tls_client_valid_days}} \
+        -CA {{cert_dir}}/{{tls_ca_cert}} -CAkey {{cert_dir}}/{{tls_ca_key}} -set_serial {{ 999999999 | random }} \
+        -in {{cert_dir}}/{{tls_client_csr}} -out {{cert_dir}}/{{tls_client_cert}} -extfile {{cert_dir}}/{{tls_client_extfile}}
         fi
     args:
       executable: /bin/bash

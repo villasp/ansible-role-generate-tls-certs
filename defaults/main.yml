@@ -3,9 +3,9 @@
 generate_tls_certs: true
 # Do not put trailing slash "/"
 cert_dir: ./certs
-generate_ca_cert: false
-generate_client_cert: false
-generate_server_cert: false
+generate_ca_cert: true
+generate_client_cert: true
+generate_server_cert: true
 
 # -------
 # CA CERT

@@ -1,5 +1,4 @@
 ---
-# tasks file for generate-tls-certs
 
   - name: Generate CA cert
     import_tasks: generate-ca-cert.yaml
